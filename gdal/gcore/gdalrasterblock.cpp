@@ -7,7 +7,7 @@
  *
  **********************************************************************
  * Copyright (c) 1998, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1075,9 +1075,13 @@ CPLErr GDALRasterBlock::Internalize()
 
 void GDALRasterBlock::MarkDirty()
 {
-    bDirty = true;
     if( poBand )
+    {
         poBand->InitRWLock();
+        if( !bDirty )
+            poBand->IncDirtyBlocks(1);
+    }
+    bDirty = true;
 }
 
 /************************************************************************/
@@ -1091,7 +1095,12 @@ void GDALRasterBlock::MarkDirty()
  * to disk before it can be flushed.
  */
 
-void GDALRasterBlock::MarkClean() { bDirty = false; }
+void GDALRasterBlock::MarkClean()
+{
+    if( bDirty && poBand )
+        poBand->IncDirtyBlocks(-1);
+    bDirty = false;
+}
 
 /************************************************************************/
 /*                          DestroyRBMutex()                           */

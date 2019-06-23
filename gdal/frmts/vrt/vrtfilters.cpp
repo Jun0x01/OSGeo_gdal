@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -575,12 +575,14 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 
 CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
                                          const char *pszVRTPath,
-                                         void* pUniqueHandle )
+                                         void* pUniqueHandle,
+                                         std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     {
         const CPLErr eErr = VRTFilteredSource::XMLInit( psTree, pszVRTPath,
-                                                        pUniqueHandle );
+                                                        pUniqueHandle,
+                                                        oMapSharedSources );
         if( eErr != CE_None )
             return eErr;
     }
@@ -677,13 +679,14 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath,
-                                  void* pUniqueHandle )
+                                  void* pUniqueHandle,
+                                  std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     if( EQUAL(psChild->pszValue, "KernelFilteredSource") )
     {
         VRTSource *poSrc = new VRTKernelFilteredSource();
-        if( poSrc->XMLInit( psChild, pszVRTPath, pUniqueHandle ) == CE_None )
+        if( poSrc->XMLInit( psChild, pszVRTPath, pUniqueHandle, oMapSharedSources ) == CE_None )
             return poSrc;
 
         delete poSrc;

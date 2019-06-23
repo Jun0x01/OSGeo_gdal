@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -1940,7 +1940,9 @@ def test_ogr_mitab_44():
 def test_ogr_mitab_45():
 
     lyrNames = ['lyr1', 'lyr2']
-    fldNames = ['field1', 'поле1']
+    #                     0         1         2         3
+    #                     012345678901234567890123456789012
+    fldNames = ['field1', 'абвгдежзийклмнопрстуфхцчшщьъэюя']
     featNames = ['аз',
                  'буки',
                  'веди']

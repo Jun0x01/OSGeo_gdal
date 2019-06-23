@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Mateusz Loskot <mateusz@loskot.net>
-# Copyright (c) 2009-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
 #
 # This library is free software; you can redistribute it and/or
@@ -3672,6 +3672,34 @@ def test_ogr_geojson_single_feature_random_reading_with_id():
     assert f1.Equal(f1_ref)
     ds = None
     gdal.Unlink(tmpfilename)
+
+###############################################################################
+
+def test_ogr_geojson_3D_geom_type():
+
+    if gdaltest.geojson_drv is None:
+        pytest.skip()
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null},
+{"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
+]}""")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
 
 ###############################################################################
 

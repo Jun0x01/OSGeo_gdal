@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,7 +78,7 @@ char **VRTDriver::GetMetadataDomainList()
 {
     return BuildMetadataDomainList( GDALDriver::GetMetadataDomainList(),
                                     TRUE,
-                                    "SourceParsers", NULL );
+                                    "SourceParsers", nullptr );
 }
 
 /************************************************************************/
@@ -137,7 +137,8 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 /************************************************************************/
 
 VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                   void* pUniqueHandle )
+                                   void* pUniqueHandle,
+                                   std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
 
@@ -162,7 +163,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
     if( pfnParser == nullptr )
         return nullptr;
 
-    return pfnParser( psSrc, pszVRTPath, pUniqueHandle );
+    return pfnParser( psSrc, pszVRTPath, pUniqueHandle, oMapSharedSources );
 }
 
 /************************************************************************/

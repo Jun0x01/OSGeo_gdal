@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010, SPADAC Inc. <harsh.govind@spadac.com>
- * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2449,7 +2449,7 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
     if( psGO == nullptr )
     {
         // Otherwise look for kml.Document.Folder.GroundOverlay if there's
-        // a single occurence of Folder and GroundOverlay
+        // a single occurrence of Folder and GroundOverlay
         auto psDoc = CPLGetXMLNode(psRoot, "=kml.Document");
         if( psDoc == nullptr )
         {

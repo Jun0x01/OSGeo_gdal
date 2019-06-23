@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, 2002 Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -345,6 +345,9 @@ typedef GIntBig GSpacing;
  * specialize, test for both GDAL_DCAP_CREATE and GDAL_DCAP_CREATECOPY.
  */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
+
+/** Capability set by a driver that can copy over subdatasets. */
+#define GDAL_DCAP_SUBCREATECOPY "DCAP_SUBCREATECOPY"
 
 /** Capability set by a driver that can read/create datasets through the VSI*L API. */
 #define GDAL_DCAP_VIRTUALIO  "DCAP_VIRTUALIO"

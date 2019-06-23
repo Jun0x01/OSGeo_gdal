@@ -67,7 +67,7 @@ default:	$(TARGET_LIB) $(PLUGIN_TARGET) apps_dir
 #
 # We want them to run before creating a DLL or static LIB file, but if they were in a target then
 # that target would have to be a dependency of dll or staticlib and would always have to run, making
-# the dependant targets "out-of-date".
+# the dependent targets "out-of-date".
 #
 # We don't want to re-link the whole DLL just because we tried to delete a static LIB that didn't
 # exist. We also don't want to install a stale DLL in a static build, so we'll remove main build
@@ -202,6 +202,12 @@ $(CLEAN_MAIN_BUILD_OUTPUT_CMDS)
 
 dll:	$(GDAL_DLL)
 
+# build using cygwin
+docs:
+!IFDEF HTMLDIR
+	make PYTHONHOME= -C doc html
+!ENDIF
+
 bindings:
 	-for %d in ( $(BINDINGS) ) do \
 		cd swig \
@@ -221,7 +227,7 @@ bindings_clean:
 		&& $(MAKE) /f  makefile.vc  clean \
 		&& cd ..   \
 		|| exit 1
-install: default
+install: default docs
 	-mkdir $(BINDIR)
 	-mkdir $(DATADIR)
 	if exist $(GDAL_DLL) $(INSTALL) $(GDAL_DLL) $(BINDIR)
@@ -234,16 +240,11 @@ install: default
 	$(INSTALL) LICENSE.TXT $(DATADIR)
 !IFDEF HTMLDIR
 	-mkdir $(HTMLDIR)
-	cd frmts
-	$(MAKE) /f makefile.vc html-install
-	cd ..
+	xcopy /S /Y doc\build\html $(HTMLDIR)
 !ENDIF
 !IFDEF INCLUDE_OGR_FRMTS
 	cd ogr\ogrsf_frmts
 	$(MAKE) /f makefile.vc plugins-install
-!IFDEF HTMLDIR
-	$(MAKE) /f makefile.vc html-install
-!ENDIF
 	cd ..\..
 !ENDIF
 

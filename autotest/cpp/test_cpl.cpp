@@ -6,7 +6,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
-// Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+// Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 // Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
 // Copyright (c) 2017, NextGIS <info@nextgis.com>
 //
@@ -25,6 +25,8 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
+
+#define GDAL_COMPILATION
 
 #include "gdal_unit_test.h"
 
@@ -2593,4 +2595,14 @@ namespace tut
         CPLFree(str);
     }
 
+    // Test CPLCharUniquePtr
+    template<>
+    template<>
+    void object::test<38>()
+    {
+        CPLCharUniquePtr x;
+        ensure( x.get() == nullptr );
+        x.reset(CPLStrdup("foo"));
+        ensure_equals( std::string(x.get()), "foo");
+    }
 } // namespace tut

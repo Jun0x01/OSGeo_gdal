@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read/write functionality for JP2OpenJPEG driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1805,6 +1805,12 @@ def test_jp2openjpeg_42():
 def test_jp2openjpeg_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
+    assert ret is not None
+
+    ret = gdal.GetJPEG2000StructureAsString('data/byte_tlm_plt.jp2', ['ALL=YES'])
+    assert ret is not None
+
+    ret = gdal.GetJPEG2000StructureAsString('data/byte_one_poc.j2k', ['ALL=YES'])
     assert ret is not None
 
 ###############################################################################

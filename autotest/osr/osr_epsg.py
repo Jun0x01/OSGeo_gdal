@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -292,7 +292,7 @@ def test_osr_epsg_13():
 
     # Two matches (and test GEOGCS)
     # This will now match with 4126 (which is deprecated), since the datum
-    # is identified to 6126 and GetEPSGGeogCS has logic to substract 2000 to it.
+    # is identified to 6126 and GetEPSGGeogCS has logic to subtract 2000 to it.
     #sr.SetFromUserInput("""GEOGCS["myLKS94",
     #DATUM["Lithuania_1994_ETRS89",
     #    SPHEROID["GRS 1980",6378137,298.257222101],

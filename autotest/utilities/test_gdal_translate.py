@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  gdal_translate testing
-# Author:   Even Rouault <even dot rouault @ mines-paris dot org>
+# Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -836,6 +836,27 @@ def test_gdal_translate_38():
     assert rat.GetTableType() == 0, 'RAT not thematic'
     rat = None
     ds = None
+
+###############################################################################
+# Test -nogcp options
+
+
+def test_gdal_translate_39():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        pytest.skip()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -nogcp ../gcore/data/byte_gcp.tif tmp/test39.tif')
+
+    ds = gdal.Open('tmp/test39.tif')
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, 'Bad checksum'
+
+    gcps = ds.GetGCPs()
+    assert len(gcps) == 0, 'GCP count wrong.'
+
+    ds = None
+
 
 ###############################################################################
 # Cleanup

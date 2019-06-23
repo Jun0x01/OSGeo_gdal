@@ -3,6 +3,7 @@
 *.obj
 *.so
 *~
+*.swp
 
 .vagrant
 
@@ -13,3 +14,8 @@
 .cproject
 .idea
 .vscode
+
+# Python
+__pycache__/
+.env*/
+.venv*/

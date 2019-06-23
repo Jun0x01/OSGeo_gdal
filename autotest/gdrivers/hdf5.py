@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for HDF5 driver.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -393,6 +393,21 @@ def test_hdf5_single_char_varname():
 
     ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
     assert ds is not None
+
+def test_hdf5_attr_all_datatypes():
+
+    ds = gdal.Open('data/attr_all_datatypes.h5')
+    assert ds is not None
+    assert ds.GetMetadata() == {'attr_float16': '125 ',
+                                'attr_float32': '125 ',
+                                'attr_float64': '125 ',
+                                'attr_int16': '125 ',
+                                'attr_int32': '125 ',
+                                'attr_int8': '125 ',
+                                'attr_uint16': '125 ',
+                                'attr_uint32': '125 ',
+                                'attr_uint8': '125 '}
+
 
 
 def test_hdf5_virtual_file():

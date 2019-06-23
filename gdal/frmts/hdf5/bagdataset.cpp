@@ -687,7 +687,7 @@ CPLErr BAGSuperGridBand::IReadBlock( int, int nBlockYOff,
     H5OFFSET_TYPE offset[2] = {
         static_cast<H5OFFSET_TYPE>(0),
         static_cast<H5OFFSET_TYPE>(poGDS->m_nSuperGridRefinementStartIndex +
-                        (nRasterYSize - 1 - nBlockYOff) * nBlockXSize)
+            static_cast<H5OFFSET_TYPE>(nRasterYSize - 1 - nBlockYOff) * nBlockXSize)
     };
     hsize_t count[2] = {1, static_cast<hsize_t>(nBlockXSize)};
     {
@@ -2945,7 +2945,14 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
 
     const char* pszSUPERGRIDS = CSLFetchNameValue(l_papszOpenOptions,
                                                   "SUPERGRIDS_INDICES");
-    std::set<std::pair<int,int>> oSupergrids;
+    struct yx {
+        int y;
+        int x;
+        yx(int yin, int xin): y(yin), x(xin) {}
+        bool operator<(const yx& other) const {
+            return y < other.y || (y == other.y && x < other.x); }
+    };
+    std::set<yx> oSupergrids;
     int nMinX = 0;
     int nMinY = 0;
     int nMaxX = m_nLowResWidth - 1;
@@ -3000,7 +3007,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                 {
                     int nX = atoi(pszSUPERGRIDS + i);
                     bNextIsX = false;
-                    oSupergrids.insert(std::pair<int,int>(nY, nX));
+                    oSupergrids.insert(yx(nY, nX));
                     bHasX = true;
                 }
                 else if( (bHasX || bHasY) && pszSUPERGRIDS[i] >= '0' &&
@@ -3036,22 +3043,22 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         }
 
         bool bFirst = true;
-        for( const auto& oPair: oSupergrids )
+        for( const auto& yxPair: oSupergrids )
         {
             if( bFirst )
             {
-                nMinX = oPair.second;
-                nMaxX = oPair.second;
-                nMinY = oPair.first;
-                nMaxY = oPair.first;
+                nMinX = yxPair.x;
+                nMaxX = yxPair.x;
+                nMinY = yxPair.y;
+                nMaxY = yxPair.y;
                 bFirst = false;
             }
             else
             {
-                nMinX = std::min(nMinX, oPair.second);
-                nMaxX = std::max(nMaxX, oPair.second);
-                nMinY = std::min(nMinY, oPair.first);
-                nMaxY = std::max(nMaxY, oPair.first);
+                nMinX = std::min(nMinX, yxPair.x);
+                nMaxX = std::max(nMaxX, yxPair.x);
+                nMinY = std::min(nMinY, yxPair.y);
+                nMaxY = std::max(nMaxY, yxPair.y);
             }
         }
     }
@@ -3208,7 +3215,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                         const double dfMaxY = dfMinY + rgrid.nHeight * rgrid.fResY;
 
                         if( (oSupergrids.empty() ||
-                            oSupergrids.find(std::pair<int,int>(
+                            oSupergrids.find(yx(
                                 static_cast<int>(y), static_cast<int>(x))) !=
                                     oSupergrids.end()) &&
                             (!bHasBoundingBoxFilter ||
@@ -3283,7 +3290,7 @@ void BAGDataset::LoadMetadata()
     H5Tclose(datatype);
     H5Dclose(hMDDS);
 
-    if( strlen(pszXMLMetadata) == 0 )
+    if( pszXMLMetadata == nullptr || pszXMLMetadata[0] == 0 )
         return;
 
     // Try to get the geotransform.
@@ -3298,6 +3305,26 @@ void BAGDataset::LoadMetadata()
 
     if( psGeo != nullptr )
     {
+        CPLString osResHeight, osResWidth;
+        for( const auto* psIter = psGeo->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( strcmp(psIter->pszValue, "axisDimensionProperties") == 0 )
+            {
+                const char* pszDim = CPLGetXMLValue(
+                    psIter, "MD_Dimension.dimensionName.MD_DimensionNameTypeCode", nullptr);
+                const char* pszRes = CPLGetXMLValue(
+                    psIter, "MD_Dimension.resolution.Measure", nullptr);
+                if( pszDim && EQUAL(pszDim, "row") && pszRes )
+                {
+                    osResHeight = pszRes;
+                }
+                else if( pszDim && EQUAL(pszDim, "column") && pszRes )
+                {
+                    osResWidth = pszRes;
+                }
+            }
+        }
+
         char **papszCornerTokens = CSLTokenizeStringComplex(
             CPLGetXMLValue(psGeo, "cornerPoints.Point.coordinates", ""), " ,",
             FALSE, FALSE);
@@ -3309,13 +3336,54 @@ void BAGDataset::LoadMetadata()
             const double dfURX = CPLAtof(papszCornerTokens[2]);
             const double dfURY = CPLAtof(papszCornerTokens[3]);
 
-            adfGeoTransform[0] = dfLLX;
-            adfGeoTransform[1] = (dfURX - dfLLX) / (m_nLowResWidth - 1);
-            adfGeoTransform[3] = dfURY;
-            adfGeoTransform[5] = (dfLLY - dfURY) / (m_nLowResHeight - 1);
+            bool bPixelCenterConvention = true;
+            double dfResWidth = CPLAtof(osResWidth);
+            double dfResHeight = CPLAtof(osResHeight);
+            if( dfResWidth > 0 && dfResHeight > 0 )
+            {
+                if( fabs((dfURX - dfLLX) / dfResWidth - m_nLowResWidth) < 1e-2 &&
+                    fabs((dfURY - dfLLY) / dfResHeight - m_nLowResHeight) < 1e-2 )
+                {
+                    // Found with https://data.ngdc.noaa.gov/platforms/ocean/nos/coast/H12001-H14000/H12525/BAG/H12525_MB_4m_MLLW_1of2.bag
+                    // https://github.com/OSGeo/gdal/issues/1643
+                    CPLDebug("BAG", "cornerPoints seems to use a PixelIsArea convention.");
+                    bPixelCenterConvention = false;
+                }
+                else if( fabs((dfURX - dfLLX) / dfResWidth - (m_nLowResWidth - 1)) < 1e-2 &&
+                         fabs((dfURY - dfLLY) / dfResHeight - (m_nLowResHeight - 1)) < 1e-2 )
+                {
+                    // pixel center convention. OK
+                }
+                else
+                {
+                    CPLDebug("BAG", "cornerPoints not consistent with resolution given in metadata");
+                    CPLDebug("BAG", "Metadata horizontal resolution: %f. "
+                                    "Computed resolution: %f. "
+                                    "Computed width: %f vs %d",
+                                    dfResWidth,
+                                    (dfURX - dfLLX) / (m_nLowResWidth - 1),
+                                    (dfURX - dfLLX) / dfResWidth,
+                                    m_nLowResWidth);
+                    CPLDebug("BAG", "Metadata vertical resolution: %f. "
+                                    "Computed resolution: %f. "
+                                    "Computed height: %f vs %d",
+                                    dfResHeight,
+                                    (dfURY - dfLLY) / (m_nLowResHeight - 1),
+                                    (dfURY - dfLLY) / dfResHeight,
+                                    m_nLowResHeight);
+                }
+            }
 
-            adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
-            adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+            adfGeoTransform[0] = dfLLX;
+            adfGeoTransform[1] = (dfURX - dfLLX) / (m_nLowResWidth - (bPixelCenterConvention ? 1 : 0));
+            adfGeoTransform[3] = dfURY;
+            adfGeoTransform[5] = (dfLLY - dfURY) / (m_nLowResHeight - (bPixelCenterConvention ? 1 : 0));
+
+            if( bPixelCenterConvention )
+            {
+                adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
+                adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+            }
 
             m_dfLowResMinX = adfGeoTransform[0];
             m_dfLowResMaxX = m_dfLowResMinX + m_nLowResWidth * adfGeoTransform[1];
@@ -3496,7 +3564,7 @@ char **BAGDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:BAG", NULL);
+                                   "xml:BAG", nullptr);
 }
 
 /************************************************************************/
@@ -3854,10 +3922,20 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
     osOptions.SetNameValue("VAR_RES_UNIT", pszUnits);
 
     // Center pixel convention
-    double dfMinX = adfGeoTransform[0] + adfGeoTransform[1] / 2;
-    double dfMaxX = dfMinX + (poSrcDS->GetRasterXSize() - 1) * adfGeoTransform[1];
-    double dfMaxY = adfGeoTransform[3] + adfGeoTransform[5] / 2;
-    double dfMinY = dfMaxY + (poSrcDS->GetRasterYSize() - 1) * adfGeoTransform[5];
+    bool bPixelCenterConvention = true;
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                    "CORNER_POINTS_EXTEND_HALF_PIXEL", "FALSE")) )
+    {
+        bPixelCenterConvention = false;
+    }
+    double dfMinX = adfGeoTransform[0] +
+        (bPixelCenterConvention ? adfGeoTransform[1] / 2 : 0);
+    double dfMaxX = dfMinX + (poSrcDS->GetRasterXSize() -
+        (bPixelCenterConvention ? 1 : 0)) * adfGeoTransform[1];
+    double dfMaxY = adfGeoTransform[3] +
+        (bPixelCenterConvention ? adfGeoTransform[5] / 2 : 0);
+    double dfMinY = dfMaxY + (poSrcDS->GetRasterYSize() -
+        (bPixelCenterConvention ? 1 : 0)) * adfGeoTransform[5];
     if( adfGeoTransform[5] > 0 )
     {
         std::swap(dfMinY, dfMaxY);
@@ -4225,8 +4303,8 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
                     }
 
                     H5OFFSET_TYPE offset[2] = {
-                        static_cast<H5OFFSET_TYPE>(iY * nBlockYSize),
-                        static_cast<H5OFFSET_TYPE>(iX * nBlockXSize)
+                        static_cast<H5OFFSET_TYPE>(iY) * static_cast<H5OFFSET_TYPE>(nBlockYSize),
+                        static_cast<H5OFFSET_TYPE>(iX) * static_cast<H5OFFSET_TYPE>(nBlockXSize)
                     };
                     hsize_t count[2] = {
                         static_cast<hsize_t>(nReqCountY),
@@ -4504,6 +4582,8 @@ void GDALRegister_BAG()
 "  <Option name='ZLEVEL' type='int' "
     "description='DEFLATE compression level 1-9' default='6' />"
 "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
+"  <Option name='CORNER_POINTS_EXTEND_HALF_PIXEL' type='boolean' description="
+    "'Whether to use non standard convention for cornerPoints metadata' default='false'/>"
 "</CreationOptionList>" );
 
     poDriver->pfnOpen = BAGDataset::Open;

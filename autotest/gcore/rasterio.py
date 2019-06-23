@@ -5,10 +5,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test default implementation of GDALRasterBand::IRasterIO
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,7 @@ import sys
 
 
 from osgeo import gdal
+import gdaltest
 import pytest
 
 ###############################################################################
@@ -951,3 +952,19 @@ def test_rasterio_dataset_readarray_cint16():
     assert got[0] == numpy.array([[1 + 2j]])
     assert got[1] == numpy.array([[3 + 4j]])
 
+
+def test_rasterio_rasterband_write_on_readonly():
+
+    ds = gdal.Open('data/byte.tif')
+    band = ds.GetRasterBand(1)
+    with gdaltest.error_handler():
+        err = band.WriteRaster(0, 0, 20, 20, band.ReadRaster())
+    assert err != 0
+
+
+def test_rasterio_dataset_write_on_readonly():
+
+    ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        err = ds.WriteRaster(0, 0, 20, 20, ds.ReadRaster())
+    assert err != 0

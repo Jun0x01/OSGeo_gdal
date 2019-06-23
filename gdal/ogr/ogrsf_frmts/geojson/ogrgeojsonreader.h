@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -237,6 +237,11 @@ json_object CPL_DLL*  CPL_json_object_object_get( struct json_object* obj,
 
 bool CPL_DLL OGRJSonParse( const char* pszText, json_object** ppoObj,
                            bool bVerboseError = true );
+
+bool OGRGeoJSONUpdateLayerGeomType( OGRLayer* poLayer,
+                                    bool& bFirstGeom,
+                                    OGRwkbGeometryType eGeomType,
+                                    OGRwkbGeometryType& eLayerGeomType );
 
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */

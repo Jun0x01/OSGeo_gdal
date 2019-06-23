@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -329,7 +329,8 @@ CPLErr VRTRasterBand::SetCategoryNames( char ** papszNewNames )
 
 CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
                                const char *pszVRTPath,
-                               void* pUniqueHandle )
+                               void* pUniqueHandle,
+                               std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
 /* -------------------------------------------------------------------- */
@@ -576,7 +577,8 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
             break;
         }
 
-        if( poBand->XMLInit( psNode, pszVRTPath, pUniqueHandle ) == CE_None )
+        if( poBand->XMLInit( psNode, pszVRTPath, pUniqueHandle,
+                             oMapSharedSources ) == CE_None )
         {
             SetMaskBand(poBand);
         }

@@ -8,7 +8,7 @@
 #
 ###############################################################################
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -701,6 +701,34 @@ def test_numpy_rw_18():
 
     res = ds.ReadAsArray(interleave='pixel')
     assert numpy.all(img == res)
+
+###############################################################################
+# The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
+
+def test_numpy_rw_failure_in_readasarray():
+
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/idontexist2.vrt')
+    assert ds is not None
+
+    exception_raised = False
+    with gdaltest.enable_exceptions():
+        try:
+            ds.ReadAsArray()
+        except RuntimeError:
+            exception_raised = True
+    assert exception_raised
+
+    exception_raised = False
+    with gdaltest.enable_exceptions():
+        try:
+            ds.GetRasterBand(1).ReadAsArray()
+        except RuntimeError:
+            exception_raised = True
+    assert exception_raised
+
 
 
 def test_numpy_rw_cleanup():

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -357,7 +357,7 @@ static void
 gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                         int nXSize, int nYSize,
                         int nBands, GDALDataType eType,
-                        int nPixelSpace, int nLineSpace, int nBandSpace,
+                        int nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                         int bAllTouched,
                         OGRGeometry *poShape, double *padfBurnValue,
                         GDALBurnValueSrc eBurnValueSrc,
@@ -375,7 +375,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
     }
     if(nLineSpace == 0)
     {
-        nLineSpace = nXSize * nPixelSpace;
+        nLineSpace = static_cast<GSpacing>(nXSize) * nPixelSpace;
     }
     if(nBandSpace == 0)
     {

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -529,17 +529,9 @@ void OGRGeoJSONLayer::DetectGeometryType()
         if( nullptr != poGeometry )
         {
             OGRwkbGeometryType eGeomType = poGeometry->getGeometryType();
-            if( bFirstGeometry )
+            if( !OGRGeoJSONUpdateLayerGeomType(
+                    this, bFirstGeometry, eGeomType, eLayerGeomType) )
             {
-                eLayerGeomType = eGeomType;
-                GetLayerDefn()->SetGeomType( eGeomType );
-                bFirstGeometry = false;
-            }
-            else if( eGeomType != eLayerGeomType )
-            {
-                CPLDebug( "GeoJSON",
-                    "Detected layer of mixed-geometry type features." );
-                GetLayerDefn()->SetGeomType( DefaultGeometryType );
                 delete poFeature;
                 break;
             }

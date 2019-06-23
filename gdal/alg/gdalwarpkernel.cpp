@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1930,7 +1930,7 @@ static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 
     if( poWK->papanBandSrcValid != nullptr
         && poWK->papanBandSrcValid[iBand] != nullptr
-        && ((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
+        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
               & (0x01 << (iSrcOffset & 0x1f)))) )
     {
         *pdfDensity = 0.0;
@@ -2334,9 +2334,10 @@ static bool GWKBilinearResample4Sample( GDALWarpKernel *poWK, int iBand,
     double dfAccumulatorDensity = 0.0;
     double dfAccumulatorDivisor = 0.0;
 
+    const GPtrDiff_t nSrcPixels = static_cast<GPtrDiff_t>(nSrcXSize) * nSrcYSize;
     // Get pixel row.
     if( iSrcY >= 0 && iSrcY < nSrcYSize
-        && iSrcOffset >= 0 && iSrcOffset < nSrcXSize * nSrcYSize
+        && iSrcOffset >= 0 && iSrcOffset < nSrcPixels
         && GWKGetPixelRow( poWK, iBand, iSrcOffset, 1,
                            adfDensity, adfReal, adfImag ) )
     {
@@ -2377,7 +2378,7 @@ static bool GWKBilinearResample4Sample( GDALWarpKernel *poWK, int iBand,
     // Get pixel row.
     if( iSrcY+1 >= 0 && iSrcY+1 < nSrcYSize
         && iSrcOffset+nSrcXSize >= 0
-        && iSrcOffset+nSrcXSize < nSrcXSize * nSrcYSize
+        && iSrcOffset+nSrcXSize < nSrcPixels
         && GWKGetPixelRow( poWK, iBand, iSrcOffset+nSrcXSize, 1,
                            adfDensity, adfReal, adfImag ) )
     {

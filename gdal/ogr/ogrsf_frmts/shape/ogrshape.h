@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,7 @@
 #include "shapefil.h"
 #include "shp_vsi.h"
 #include "ogrlayerpool.h"
+#include <set>
 #include <vector>
 
 /* Was limited to 255 until OGR 1.10, but 254 seems to be a more */
@@ -183,6 +184,9 @@ class OGRShapeLayer final: public OGRAbstractProxiedLayer
     } NormandyState; /* French joke. "Peut'et' ben que oui, peut'et' ben que non." Sorry :-) */
     NormandyState       m_eNeedRepack;
 
+    // Set of field names (in upper case). Built and invalidated when convenient
+    std::set<CPLString> m_oSetUCFieldName{};
+
   protected:
 
     virtual void        CloseUnderlyingLayer() override;
@@ -317,6 +321,8 @@ class OGRShapeDataSource final: public OGRDataSource
     DBFHandle            DS_DBFOpen( const char * pszDBFFile,
                                      const char * pszAccess );
     char               **GetOpenOptions() { return papszOpenOptions; }
+
+    static const char* const* GetExtensionsForDeletion();
 };
 
 #endif /* ndef OGRSHAPE_H_INCLUDED */
